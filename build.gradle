@@ -1,0 +1,151 @@
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+    id 'net.neoforged.moddev' version '2.0.141'
+    id 'idea'
+}
+
+version = mod_version
+group = mod_group_id
+
+base {
+    archivesName = "drivebywire-typewriter"
+}
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+
+sourceSets.main.resources {
+    srcDir('src/generated/resources')
+    exclude("**/*.bbmodel")
+    exclude("src/generated/**/.cache")
+}
+
+neoForge {
+    version = project.neo_version
+
+    parchment {
+        mappingsVersion = project.parchment_mappings_version
+        minecraftVersion = project.parchment_minecraft_version
+    }
+
+    runs {
+        client {
+            client()
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+        }
+
+        server {
+            server()
+//            programArgument '--nogui'
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+        }
+
+        gameTestServer {
+            type = "gameTestServer"
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+        }
+
+        data {
+            data()
+            programArguments.addAll '--mod', project.mod_id, '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
+        }
+
+        configureEach {
+            systemProperty 'forge.logging.markers', 'REGISTRIES'
+            logLevel = org.slf4j.event.Level.DEBUG
+        }
+    }
+
+    mods {
+        "${mod_id}" {
+            sourceSet(sourceSets.main)
+        }
+    }
+}
+
+configurations {
+    runtimeClasspath.extendsFrom localRuntime
+    extractedDeps
+}
+
+def extractedJarsDir = layout.buildDirectory.dir('extracted-jars')
+
+tasks.register('extractNestedJars', Copy) {
+    from {
+        configurations.extractedDeps.collect { zipTree(it) }
+    }
+    include 'META-INF/jarjar/*.jar'
+    eachFile { relativePath = new RelativePath(true, it.name) }
+    includeEmptyDirs = false
+    into extractedJarsDir
+}
+
+tasks.named('compileJava').configure { dependsOn('extractNestedJars') }
+
+dependencies {
+    // Drive By Wire
+    compileOnly files('lib/drivebywire-0.2.7.jar')
+    localRuntime files('lib/drivebywire-0.2.7.jar')
+
+    // Create (nested JARs like Ponder also extracted)
+    extractedDeps files('lib/create-1.21.1-6.0.10.jar')
+    compileOnly files('lib/create-1.21.1-6.0.10.jar')
+    localRuntime files('lib/create-1.21.1-6.0.10.jar')
+
+    // Create:Aeronautics (nested JARs extracted to build/extracted-jars/)
+    extractedDeps files("lib/create-aeronautics-bundled-1.21.1-1.1.3.jar")
+    compileOnly files("lib/create-aeronautics-bundled-1.21.1-1.1.3.jar")
+    compileOnly fileTree(dir: extractedJarsDir, include: '*.jar')
+    localRuntime files("lib/create-aeronautics-bundled-1.21.1-1.1.3.jar")
+
+    localRuntime files('../runtime/sable-neoforge-1.21.1-1.1.3.jar')
+}
+
+var generateModMetadata = tasks.register("generateModMetadata", ProcessResources) {
+    var replaceProperties = [
+            minecraft_version      : minecraft_version,
+            minecraft_version_range: minecraft_version_range,
+            neo_version            : neo_version,
+            loader_version_range   : loader_version_range,
+            mod_id                 : mod_id,
+            mod_name               : mod_name,
+            mod_license            : mod_license,
+            mod_version            : mod_version,
+    ]
+    inputs.properties replaceProperties
+    expand replaceProperties
+    from "src/main/templates"
+    into "build/generated/sources/modMetadata"
+}
+
+sourceSets.main.resources.srcDir generateModMetadata
+neoForge.ideSyncTask generateModMetadata
+neoForge.ideSyncTask tasks.named('extractNestedJars')
+
+publishing {
+    publications {
+        register('mavenJava', MavenPublication) {
+            from components.java
+        }
+    }
+    repositories {
+        maven {
+            url "file://${project.projectDir}/repo"
+        }
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+idea {
+    module {
+        downloadSources = true
+        downloadJavadoc = true
+    }
+}
+
+tasks.named('wrapper', Wrapper).configure {
+    distributionType = Wrapper.DistributionType.BIN
+}
