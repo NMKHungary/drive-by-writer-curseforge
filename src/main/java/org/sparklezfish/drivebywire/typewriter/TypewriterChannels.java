@@ -8,59 +8,70 @@ import java.util.Map;
 public final class TypewriterChannels {
 
     private static final String HUNGARIAN_CHARACTERS = "áÁéÉíÍóÓöÖőŐúÚüÜűŰ";
+    private static final String I18N_PREFIX = "drivebywire.typewriter.channel.";
 
+    // 核心映射表（仅通道名改为i18n键，逻辑不变）
     private static final LinkedHashMap<Integer, String> CODE_TO_CHANNEL = new LinkedHashMap<>();
     private static final LinkedHashMap<String, String> CHARACTER_TO_CHANNEL = new LinkedHashMap<>();
     private static final LinkedHashMap<String, String> CHANNEL_NAMES = new LinkedHashMap<>();
 
     static {
-        // Letters A-Z (GLFW codes match ASCII uppercase: 65-90)
+        // 字母 A-Z (GLFW 65-90)
         for (int c = 65; c <= 90; c++) {
-            registerCode(c, "key" + (char) c);
-            registerCharacter(Character.toString((char) c), "key" + (char) c);
-            registerCharacter(Character.toString(Character.toLowerCase((char) c)), "key" + (char) c);
+            String key = String.valueOf((char) c).toLowerCase();
+            String channel = I18N_PREFIX + key;
+            registerCode(c, channel);
+            registerCharacter(Character.toString((char) c), channel);
+            registerCharacter(Character.toString(Character.toLowerCase((char) c)), channel);
         }
-        // Digits 0-9 (GLFW 48-57)
+        // 数字 0-9 (GLFW 48-57)
         for (int c = 48; c <= 57; c++) {
-            registerCode(c, "key" + (char) c);
-            registerCharacter(Character.toString((char) c), "key" + (char) c);
+            String channel = I18N_PREFIX + (char) c;
+            registerCode(c, channel);
+            registerCharacter(Character.toString((char) c), channel);
         }
-        // Symbol keys present in the Typewriter's keyboard UI
-        registerCodeAndCharacter(32, " ", "keySpace");
-        registerCodeAndCharacter(39, "'", "keyApostrophe");
-        registerCodeAndCharacter(44, ",", "keyComma");
-        registerCodeAndCharacter(45, "-", "keyMinus");
-        registerCodeAndCharacter(46, ".", "keyPeriod");
-        registerCodeAndCharacter(47, "/", "keySlash");
-        registerCodeAndCharacter(59, ";", "keySemicolon");
-        registerCodeAndCharacter(61, "=", "keyEquals");
-        registerCodeAndCharacter(91, "[", "keyLeftBracket");
-        registerCodeAndCharacter(92, "\\", "keyBackslash");
-        registerCodeAndCharacter(93, "]", "keyRightBracket");
+
+        // 符号按键（全替换为i18n键）
+        registerCodeAndCharacter(32, " ", I18N_PREFIX + "space");
+        registerCodeAndCharacter(39, "'", I18N_PREFIX + "apostrophe");
+        registerCodeAndCharacter(44, ",", I18N_PREFIX + "comma");
+        registerCodeAndCharacter(45, "-", I18N_PREFIX + "minus");
+        registerCodeAndCharacter(46, ".", I18N_PREFIX + "period");
+        registerCodeAndCharacter(47, "/", I18N_PREFIX + "slash");
+        registerCodeAndCharacter(59, ";", I18N_PREFIX + "semicolon");
+        registerCodeAndCharacter(61, "=", I18N_PREFIX + "equals");
+        registerCodeAndCharacter(91, "[", I18N_PREFIX + "left_bracket");
+        registerCodeAndCharacter(92, "\\", I18N_PREFIX + "backslash");
+        registerCodeAndCharacter(93, "]", I18N_PREFIX + "right_bracket");
+
+        // 匈牙利字符
         registerHungarianCharacters();
-        // Control keys
-        registerCode(257, "keyEnter");
-        registerCode(258, "keyTab");
-        registerCode(259, "keyBackspace");
-        registerCode(261, "keyDelete");
-        registerCode(280, "keyCapsLock");
-        // Navigation
-        registerCode(262, "keyRight");
-        registerCode(263, "keyLeft");
-        registerCode(264, "keyDown");
-        registerCode(265, "keyUp");
-        registerCode(266, "keyPageUp");
-        registerCode(267, "keyPageDown");
-        registerCode(269, "keyEnd");
-        // Modifiers
-        registerCode(340, "keyLeftShift");
-        registerCode(341, "keyLeftCtrl");
-        registerCode(342, "keyLeftAlt");
-        registerCode(343, "keyLeftSuper");
-        registerCode(344, "keyRightShift");
-        registerCode(345, "keyRightCtrl");
-        registerCode(346, "keyRightAlt");
-        registerCode(348, "keyMenu");
+
+        // 控制按键
+        registerCode(257, I18N_PREFIX + "enter");
+        registerCode(258, I18N_PREFIX + "tab");
+        registerCode(259, I18N_PREFIX + "backspace");
+        registerCode(261, I18N_PREFIX + "delete");
+        registerCode(280, I18N_PREFIX + "caps_lock");
+
+        // 导航按键
+        registerCode(262, I18N_PREFIX + "right");
+        registerCode(263, I18N_PREFIX + "left");
+        registerCode(264, I18N_PREFIX + "down");
+        registerCode(265, I18N_PREFIX + "up");
+        registerCode(266, I18N_PREFIX + "page_up");
+        registerCode(267, I18N_PREFIX + "page_down");
+        registerCode(269, I18N_PREFIX + "end");
+
+        // 修饰按键
+        registerCode(340, I18N_PREFIX + "left_shift");
+        registerCode(341, I18N_PREFIX + "left_ctrl");
+        registerCode(342, I18N_PREFIX + "left_alt");
+        registerCode(343, I18N_PREFIX + "left_super");
+        registerCode(344, I18N_PREFIX + "right_shift");
+        registerCode(345, I18N_PREFIX + "right_ctrl");
+        registerCode(346, I18N_PREFIX + "right_alt");
+        registerCode(348, I18N_PREFIX + "menu");
     }
 
     public static final List<String> CHANNELS = List.copyOf(CHANNEL_NAMES.values());
@@ -107,15 +118,15 @@ public final class TypewriterChannels {
     }
 
     private static void registerHungarianCharacters() {
-        registerAccent("á", "keyÁ");
-        registerAccent("é", "keyÉ");
-        registerAccent("í", "keyÍ");
-        registerAccent("ó", "keyÓ");
-        registerAccent("ö", "keyÖ");
-        registerAccent("ő", "keyŐ");
-        registerAccent("ú", "keyÚ");
-        registerAccent("ü", "keyÜ");
-        registerAccent("ű", "keyŰ");
+        registerAccent("á", I18N_PREFIX + "hungarian.a_acute");
+        registerAccent("é", I18N_PREFIX + "hungarian.e_acute");
+        registerAccent("í", I18N_PREFIX + "hungarian.i_acute");
+        registerAccent("ó", I18N_PREFIX + "hungarian.o_acute");
+        registerAccent("ö", I18N_PREFIX + "hungarian.o_diaeresis");
+        registerAccent("ő", I18N_PREFIX + "hungarian.o_double_acute");
+        registerAccent("ú", I18N_PREFIX + "hungarian.u_acute");
+        registerAccent("ü", I18N_PREFIX + "hungarian.u_diaeresis");
+        registerAccent("ű", I18N_PREFIX + "hungarian.u_double_acute");
     }
 
     private static void registerAccent(String character, String channel) {
